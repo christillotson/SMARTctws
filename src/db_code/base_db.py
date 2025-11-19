@@ -1,3 +1,6 @@
+# be careful with copy and pasting
+# basically in here go through billboard.py and get through everything except body of function
+
 import os
 import sqlite3
 import numpy as np
@@ -12,65 +15,22 @@ sqlite3.register_adapter(np.int32, lambda x: int(x))
 class BaseDB:
     '''
     This class contains code that can be used with any sqlite database. Or at least, that's what it's designed to do.
-
-    Implement a _load_new_data method to make a continuously updating database.
     '''
 
     def __init__(self,
                  path: str,
-                 data_DF:pd.DataFrame = pd.DataFrame(),  # creating as empty because for reading don't need it
-                 # but for writing and creating (creating really just writing with empty csv) should include
-                 
-                 create: bool = False,
-                 load_new_data:bool = False,
-
-                 list_of_table_names_constant: list = [],
-                 list_of_table_paths_constant: list = [],
-                 list_of_create_sqls_constant: list = [],
+                 create: bool = False
                 ):
         '''
         Arguments
             path: The path to the database file
 
-            data_DF: The data that is added (if creating from the empty csv or adding new data)
-            By default an empty pandas dataframe because it's not necessary to pass in when being read
-
-            create: If the database does not exist, it will be created
+            create: If the databse does not exist, it will be created
                     if this is set to True, otherwise a FileNotFound
                     error will be raised.
-
-            load_new_data: Whether or not new data is being loaded
-
-            *The following three are associated with each table and should be of the same
-            index within each list. Each are for tables that are constant (do not change)*
-            
-            list_of_table_names_constant: A list of table names, preferably in the format of tName.
-
-            list_of_table_paths_constant: A list of the paths where the CSVs used for creating each table are stored.
-            Suggested to create these with os.path.join to improve compatibility, so will need to
-            import os in the notebook or other environment to create them before calling DB class.
-            
-            list_of_create_sqls: The sql commands to execute to create each table. Includes tables which will be changed.       
         '''
-
-        self.path = path 
-        self.data_DF = data_DF
-
-        # creating lists
-        self.list_of_table_names = list_of_table_names_constant
-        self.list_of_table_paths = list_of_table_paths_constant
-        self.list_of_create_sqls = list_of_create_sqls_constant
-        
-        # needs to be in format of:
-        # sql = """
-        #     CREATE TABLE t(table name) (
-        #     primary_key_row TYPE PRIMARY KEY
-        #     ETCETERA
-        #     )
-
-        # ;"""
-        # self.run_action(sql)    
-
+        self.path = path # needs to occur BEFORE things that use it, such as self._check_exists
+        #set to not connected by default
         self._connected = False
 
         #check if the database exists by seeing what we passed into create
@@ -78,24 +38,13 @@ class BaseDB:
 
         if not self._existed:
             self._create_tables()
-            # self._load_data() # for future databases probably would just have load data be called
-            # turning this off because no data needs to be initially loaded?
-            # whenever have new data to load into database, so wouldn't include create tables AND
+            # self._load_data() # for future databses probably would just have load data be called
+            # whenever have new data to load into databse, so wouldn't include create tables AND
             # load data
 
-        
-        if load_new_data == True:
-            self._load_new_data()
-
-        return
-
-    def _load_new_data(self) -> None:
-        # implement in new py file
         return
 
     def _create_tables(self) -> None:
-        for create_command in self.list_of_create_sqls:
-            self.run_action(create_command)
 
         # needs to be in format of:
         # sql = """
@@ -110,40 +59,25 @@ class BaseDB:
         return
 
     def _load_data(self) -> None:
-        # this implements globals() function. Look up geeksforgeeks.org for source.
-        for i in range(len(self.list_of_table_names)):
-            globals()[self.list_of_table_names[i]] = pd.read_csv(self.list_of_table_paths[i])
-            # first bit before equals sign turns the string into a name
+        # format of following for every table
+        # tSong = pd.read_csv(self.PATH_SONG)
+        # where PATH_SONG is like 
+        # PATH_SONG = os.path.join('data','bb_song.csv')
+        # sql = """
+        #     INSERT INTO tSong (song_id, year, artist, track, time)
+        #     VALUES (:song_id, :year, :artist, :track, :time)
+        #     ;"""
+        # for row in tSong.to_dict(orient='records'):
+        #     self.run_action(sql, row, keep_open=True)
 
-            columns = ', '.join(globals()[self.list_of_table_names[i]].columns) # easy to get columns
-
-            values_list = [] # will store column names with colons here basically
-            for val in globals()[self.list_of_table_names[i]].columns:
-                val_with_colon = f':{val}' # put the colon before it
-                values_list.append(val_with_colon) # add to list of values           
-            values = ', '.join(f'{val}' for val in values_list) # finally make values string which will be put in sql command below
-            table_name = self.list_of_table_names[i]
-            sql = f"""
-                    INSERT INTO {table_name} ({columns})
-                    VALUES ({values})
-                ;"""
-
-            # this is called ORM object relational mode
-            # creating a system where dont have to do sql myhself
-            # just avoid publicly facing database f strings because can be insterted by public
-
-            for row in globals()[self.list_of_table_names[i]].to_dict(orient = 'records'):
-                self.run_action(sql, params = row, keep_open = True)
-        
-        self._commit_and_close()
-
-        
+        # then run this last line last
+        # self._commit_and_close()
         return
 
     def _connect(self,
                   foreign_keys: bool = True) -> None:
         '''
-        Establish a connection to the database and create a cursor. If
+        Establish a connection to the databse and create a cursor. If
         a connection is already opened, will not open a new one.
 
         If foreign_keys is set to False, foreign key constraints will
@@ -176,7 +110,7 @@ class BaseDB:
                       create: bool
                      ) -> None:
         '''
-        Check if the database and all folders in the path exist.
+        Check if the databsae and all folders in the path exist.
 
         If create is False, raise a FileNotFound error if the database,
         or any of the folders in the path do not exist.
@@ -271,3 +205,7 @@ class BaseDB:
         if not keep_open:
             self._close()
         return self._curs.lastrowid
+
+
+        # as playing around with databases moving forward could add more code, but this is bare minimum, almost all is in billboard
+        # dont just copy and paste from billboard.py
