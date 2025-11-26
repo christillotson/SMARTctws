@@ -8,3 +8,7 @@ REQUEST_URL = "sample url"
 PATH_TO_PULL_JSON = "path"
 
 ### </Request related>
+
+### <Internal path related>
+
+### </Internal path related>
