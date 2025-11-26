@@ -1,6 +1,8 @@
 # imports
 from db_code.base_db import BaseDB
 
+from datetime import datetime, timezone
+
 import os
 import sqlite3
 import numpy as np
@@ -65,7 +67,6 @@ class CWFACDB(BaseDB):
 
         print("loading data")
 
-        from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat()
 
         # ---------------------------------------------------------

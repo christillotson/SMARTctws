@@ -22,26 +22,22 @@ PATH_TO_DB = os.path.join('db_code','databasefile')
 def add_new(data_DF:pd.DataFrame,
             path_string = PATH_TO_DB) -> None:
 
-    db = CWFACDB(
-### UNFINISHED WAS HERE LAST 11/19/2025 1:50 PM
+    db = CWFACDB(path = path_string,
+                 create = False
         )
+    db._load_data(df = data_DF)
     
     return
 
-def read_db(path_string = PATH_TO_DB) -> pd.DataFrame:
+def read_db(sql:str,
+            params: dict = None,
+            path_string = PATH_TO_DB) -> pd.DataFrame:
 
-    db = HNDB(
-        path = path_string,
-        create = False,
-        load_new_data = False,
+    db = CWFACDB(path = path_string,
+                 create = False
         )
-
-    sql = """
-    SELECT * FROM tScore
-    ;"""
-
-    pd.set_option('display.max_rows', 100) # max just needs to be higher than 56 data + 1 column that is going on for this implementation
     
-    query_run = db.run_query(sql)
+    query_run = db.run_query(sql = sql, params = params)
 
     return(query_run)
+
