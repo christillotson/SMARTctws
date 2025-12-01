@@ -43,7 +43,14 @@ def generate_query_and_params(serialIds, species_ids, datemin, datemax):
     # --------------------------
     # date range
     # --------------------------
+
+    if datemin is None:
+        datemin = "2000-01-01 00:00:00"
+    if datemax is None:
+        datemax = "3000-01-01 00:00:00"
+
     sql += " AND date >= :datemin AND date <= :datemax"
+    
     params["datemin"] = datemin
     params["datemax"] = datemax
 
