@@ -1,0 +1,26 @@
+/* Default theme (light, warm) */
+body {
+    background-color: #fffaf3;
+    color: #222;
+    font-family: Arial, sans-serif;
+}
+h1 {
+    color: #333;
+}
+#graph-content {
+    border: 1px solid #e0d7c5;
+    border-radius: 6px;
+    background: #ffffff;
+}
+button {
+    background-color: #f0a84a;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:disabled {
+    background-color: #d6c4a2;
+    cursor: not-allowed;
+}

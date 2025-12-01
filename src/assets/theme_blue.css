@@ -1,0 +1,26 @@
+/* Blue accent theme */
+body {
+    background-color: #eaf6ff;
+    color: #07263b;
+    font-family: Arial, sans-serif;
+}
+h1 {
+    color: #023047;
+}
+#graph-content {
+    border: 1px solid #b6e0ff;
+    border-radius: 6px;
+    background: #ffffff;
+}
+button {
+    background-color: #118ab2;
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:disabled {
+    background-color: #7fb7c9;
+    cursor: not-allowed;
+}

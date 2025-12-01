@@ -1,0 +1,26 @@
+/* Dark theme */
+body {
+    background-color: #0f1722;
+    color: #e6eef6;
+    font-family: Arial, sans-serif;
+}
+h1 {
+    color: #ffffff;
+}
+#graph-content {
+    border: 1px solid #263240;
+    border-radius: 6px;
+    background: #07101a;
+}
+button {
+    background-color: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+button:disabled {
+    background-color: #12324d;
+    cursor: not-allowed;
+}
