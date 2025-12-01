@@ -1,4 +1,4 @@
-def generate_query_and_params(serialIds, species_ids, datemin, datemax):
+def generate_query_and_params(serialIds, species_ids, datemin, datemax, lat_min, lat_max, lon_min, lon_max):
 
     sql = """
     SELECT tObservations.*, tAnimal.species_id, tAnimal.first_scraped, tAnimal.last_scraped, tSpecies.species_name
@@ -49,10 +49,27 @@ def generate_query_and_params(serialIds, species_ids, datemin, datemax):
     if datemax is None:
         datemax = "3000-01-01 00:00:00"
 
+    if lat_min is None:
+        lat_min = -90
+    if lat_max is None:
+        lat_max = 90
+    if lon_min is None:
+        lon_min = -180
+    if lon_max is None:
+        lon_max = 180
+
     sql += " AND date >= :datemin AND date <= :datemax"
     
     params["datemin"] = datemin
     params["datemax"] = datemax
+
+    sql += " AND latitude >= :lat_min AND latitude <= :lat_max"
+    sql += " AND longitude >= :lon_min AND longitude <= :lon_max"
+
+    params["lat_min"] = lat_min
+    params["lat_max"] = lat_max
+    params["lon_min"] = lon_min
+    params["lon_max"] = lon_max
 
     return sql, params
 

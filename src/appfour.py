@@ -98,7 +98,14 @@ def run_all_update_funcs():
 # -------------------------
 # SQL helpers (unchanged)
 # -------------------------
-def build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datemin, datemax):
+def build_sql_and_params_from_selections(species_wanted, 
+                                         serial_id_wanted, 
+                                         datemin, 
+                                         datemax,
+                                         lat_min,
+                                         lat_max,
+                                         lon_min,
+                                         lon_max):
     if generate_query_and_params is None:
         where_clauses = []
         params = {}
@@ -114,6 +121,18 @@ def build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datem
         if datemax is not None:
             where_clauses.append("date <= %(datemax)s")
             params['datemax'] = datemax.isoformat()
+        if lat_min is not None:
+            where_clauses.append("latitude >= %(lat_min)s")
+            params['lat_min'] = lat_min
+        if lat_max is not None:
+            where_clauses.append("latitude <= %(lat_max)s")
+            params['lat_max'] = lat_max
+        if lon_min is not None:
+            where_clauses.append("longitude >= %(lon_min)s")
+            params['lon_min'] = lon_min
+        if lon_max is not None:
+            where_clauses.append("longitude <= %(lon_max)s")
+            params['lon_max'] = lon_max
         where = " AND ".join(where_clauses) if where_clauses else "1=1"
         sql = f"SELECT * FROM observations WHERE {where};"
         return sql, params
@@ -122,7 +141,11 @@ def build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datem
             serialIds=serial_id_wanted,
             species_ids=species_wanted,
             datemin=datemin,
-            datemax=datemax
+            datemax=datemax,
+            lat_min=lat_min,
+            lat_max=lat_max,
+            lon_min=lon_min,
+            lon_max=lon_max
         )
 
 def execute_sql(sql, params):
@@ -229,6 +252,31 @@ app.layout = html.Div([
                 display_format='YYYY-MM-DD'
             ),
             html.Br(), html.Br(),
+
+            html.Div([
+               html.Label("Latitude Min"),
+               dcc.Input(id='lat-min', type='number', placeholder='Min Latitude', style={'width': '100%'}),
+
+
+               html.Label("Latitude Max"),
+               dcc.Input(id='lat-max', type='number', placeholder='Max Latitude', style={'width': '100%'}),
+
+
+               html.Label("Longitude Min"),
+               dcc.Input(id='lon-min', type='number', placeholder='Min Longitude', style={'width': '100%'}),
+
+
+               html.Label("Longitude Max"),
+               dcc.Input(id='lon-max', type='number', placeholder='Max Longitude', style={'width': '100%'}),
+           ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '10px', 'marginBottom': '20px'}),
+
+
+           # Red warning message
+           html.Div(
+               "🐾 Warning: Setting min/max latitude or longitude may cut off parts of an animal's path. "
+               "The points on the map may be misleading if your range intersects the animals' paths.🐾",
+               style={'color': 'red', 'fontSize': '14px', 'marginBottom': '10px', 'font-weight':'bold'}
+           ),
 
             html.Button("Generate query", id='btn-generate-query', n_clicks=0),
             # Toggle to show/hide SQL
@@ -361,9 +409,14 @@ def select_all_serials(n_clicks, options):
     State('date-max', 'date'),
     State('dropdown-species', 'options'),
     State('dropdown-serial', 'options'),
+    State('lat-min', 'value'),
+    State('lat-max', 'value'),
+    State('lon-min', 'value'),
+    State('lon-max', 'value'),
     prevent_initial_call=False
 )
-def on_generate_query(n_clicks, show_sql_vals, species_selected, serial_selected, date_min, date_max, species_options, serial_options):
+def on_generate_query(n_clicks, show_sql_vals, species_selected, serial_selected, date_min, date_max, species_options, serial_options,
+                      lat_min, lat_max, lon_min, lon_max):
     all_species_values = [opt['value'] for opt in species_options] if species_options else []
     all_serial_values = [opt['value'] for opt in serial_options] if serial_options else []
 
@@ -380,7 +433,17 @@ def on_generate_query(n_clicks, show_sql_vals, species_selected, serial_selected
     datemin = pd.to_datetime(date_min).to_pydatetime() if date_min else None
     datemax = pd.to_datetime(date_max).to_pydatetime() if date_max else None
 
-    sql, params = build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datemin, datemax)
+    sql, params = build_sql_and_params_from_selections(
+       species_wanted,
+       serial_id_wanted,
+       datemin,
+       datemax,
+       lat_min=lat_min,
+       lat_max=lat_max,
+       lon_min=lon_min,
+       lon_max=lon_max
+   )
+
 
     show_sql = 'show' in (show_sql_vals or [])
     sql_text = sql if (show_sql and sql) else ""
