@@ -240,17 +240,19 @@ app.layout = html.Div([
             html.Button("Select all serials", id='btn-select-all-serials', n_clicks=0),
 
             html.Br(), html.Br(),
-            html.Label("Minimum date"),
+            html.Label("Minimum date (Midnight this day)"),
+            html.Br(),html.Br(),
             dcc.DatePickerSingle(
                 id='date-min',
-                placeholder='Select minimum date',
+                placeholder='Pick min date',
                 display_format='YYYY-MM-DD'
             ),
-            html.Br(),
-            html.Label("Maximum date"),
+            html.Br(),html.Br(),
+            html.Label("Maximum date (Midnight this day)"),
+            html.Br(),html.Br(),
             dcc.DatePickerSingle(
                 id='date-max',
-                placeholder='Select maximum date',
+                placeholder='Pick max date',
                 display_format='YYYY-MM-DD'
             ),
             html.Br(), html.Br(),
@@ -328,7 +330,7 @@ app.layout = html.Div([
                     style={'height': '100%', 'width': '100%'}
                 )],
                 style={
-                'height': '80vh',
+                'height': '90vh',
                 'width': '100%',
                 'overflow': 'hidden'
                 }),
@@ -687,7 +689,7 @@ def build_map_figure_from_df(df):
             hovertext=hover_texts,
             marker=dict(size=8),
             line=dict(width=2),
-            showlegend=True
+            showlegend=True,
         ))
 
     # Layout using mapb (open-street-map style)
@@ -695,7 +697,7 @@ def build_map_figure_from_df(df):
         map_style='open-street-map',
         map_center=map_center,
         map_zoom=7.5,
-        margin={'l':0, 'r':0, 'b':0, 't':30},
+        margin={'l':0, 'r':0, 'b':0, 't':50},
         title='Observations map (points linked by serialId in time order)',
         paper_bgcolor="#eef4ab"
     )
