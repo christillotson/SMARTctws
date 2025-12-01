@@ -21,6 +21,19 @@ except Exception as e:
     read_db = None
     _IMPORT_READ_DB_ERROR = str(e)
 
+# NEW IMPORTS FOR WEBSCRAPING ##########
+try:
+    from app_functions.webscraping import do_webscrape
+except Exception as e:
+    do_webscrape = None
+    _IMPORT_WEBSCRAPE_ERROR = str(e)
+
+try:
+    from db_code.interact_db import add_new
+except Exception as e:
+    add_new = None
+    _IMPORT_ADD_NEW_ERROR = str(e)
+
 # -------------------------
 # Helper helpers & fallback demo data
 # -------------------------
@@ -186,6 +199,10 @@ app.layout = html.Div([
     dcc.Store(id='store-sql', data=None),
     dcc.Store(id='store-params', data=None),
     dcc.Store(id='store-results-df', data=None),
+    dcc.Store(id='store-last-scraped', data=None),
+    # dcc.Store(id='store-scrape-status', data="ready"),  
+
+
 
     html.H1('Serengeti Tracker Assistant', style={'textAlign': 'center'}),
 
@@ -237,8 +254,15 @@ app.layout = html.Div([
         # RIGHT: update button, figure, export button
         html.Div([
             html.Div([
+                html.Span(id='display-last-scraped', style={'marginRight': '20px'}),
+
+                html.Button("Webscrape", id='btn-webscrape', n_clicks=0, style={'marginRight': '20px'}),
+
+                # html.Span(id='display-scrape-status', style={'fontWeight': 'bold', 'marginRight': '20px'}),
+
                 html.Button("Update current", id='btn-update-current', n_clicks=0)
-            ], style={'textAlign': 'right', 'marginBottom': '10px'}),
+                    ], style={'textAlign': 'right', 'marginBottom': '10px', 'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
+
 
             dcc.Graph(id='graph-content', style={'height': '60vh'}),
 
@@ -273,6 +297,7 @@ app.layout = html.Div([
 @callback(
     Output('store-species-df', 'data'),
     Output('store-observations-df', 'data'),
+    Output('store-last-scraped', 'data'),
     Input('btn-update-current', 'n_clicks'),
     prevent_initial_call=False
 )
@@ -286,7 +311,18 @@ def on_update_current(n_clicks):
     _startup_species_df = species_df
     _startup_observations_df = observations_df
 
-    return species_df.to_dict(orient='records'), observations_df.to_dict(orient='records')
+    try:
+        last_df = read_db("SELECT last_scraped FROM tAnimal")
+        last_scraped = last_df['last_scraped'].max()
+        last_scraped = str(last_scraped) if last_scraped is not None else "Unknown"
+    except Exception:
+        last_scraped = "Unknown"
+
+    return (
+    species_df.to_dict(orient='records'),
+    observations_df.to_dict(orient='records'),
+    last_scraped
+        )
 
 
 # 2) When species or observations store changes, refresh dropdown options for species and serial dropdown
@@ -406,6 +442,30 @@ def on_run_query(n_clicks, sql, params):
     fig = build_map_figure_from_df(df)
 
     return results_data, fig
+
+@callback(
+    Output('display-last-scraped', 'children'),
+    Input('store-last-scraped', 'data')
+)
+def show_last_scraped(last_scraped):
+    if not last_scraped:
+        return "Last scraped: Unknown"
+    return f"Last scraped: {last_scraped}"
+    
+@callback(
+    Input('btn-webscrape', 'n_clicks'),
+    prevent_initial_call=True
+)
+def on_webscrape(n_clicks):
+    if do_webscrape is None or add_new is None:
+        print("Webscraping or add_new function unavailable.")
+        return
+    try:
+        df = do_webscrape()
+        add_new(df)
+    except Exception as e:
+        print("Webscrape error:", e)
+
 
 
 def build_map_figure_from_df(df):
