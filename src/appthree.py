@@ -115,17 +115,16 @@ def run_all_update_funcs():
 # -------------------------
 # Minimal wrapper for calling generate_query_and_params + read_db
 # -------------------------
-def build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datemin, datemax):
+def build_sql_and_params_from_selections(species_wanted, serial_id_wanted,
+                                         datemin, datemax,
+                                         lat_min=None, lat_max=None,
+                                         lon_min=None, lon_max=None):
     """
-    species_wanted: list[int] or None
-    serial_id_wanted: list[str] or None
-    datemin / datemax: python datetime.datetime or None
-
-    Returns (sql, params)
+    Wrapper for calling generate_query_and_params with fallback.
+    Only passes lat/lon filters if you are using the fallback.
     """
     if generate_query_and_params is None:
-        # fallback to old placeholder behavior if user hasn't provided module
-        # Build a simple SQL and params reminiscent of the previous placeholder
+        # fallback SQL builder: supports lat/lon
         where_clauses = []
         params = {}
         if species_wanted is not None:
@@ -140,19 +139,30 @@ def build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datem
         if datemax is not None:
             where_clauses.append("date <= %(datemax)s")
             params['datemax'] = datemax.isoformat()
+        if lat_min is not None:
+            where_clauses.append("latitude >= %(lat_min)s")
+            params['lat_min'] = lat_min
+        if lat_max is not None:
+            where_clauses.append("latitude <= %(lat_max)s")
+            params['lat_max'] = lat_max
+        if lon_min is not None:
+            where_clauses.append("longitude >= %(lon_min)s")
+            params['lon_min'] = lon_min
+        if lon_max is not None:
+            where_clauses.append("longitude <= %(lon_max)s")
+            params['lon_max'] = lon_max
         where = " AND ".join(where_clauses) if where_clauses else "1=1"
         sql = f"SELECT * FROM observations WHERE {where};"
         return sql, params
     else:
-        # generate_query_and_params expects datemin/datemax as datetimes (or None)
-        # The function signature you described: (serialIds, species_ids, datemin, datemax)
-        # Map our args appropriately.
+        # real function: only pass what it actually accepts
         return generate_query_and_params(
             serialIds=serial_id_wanted,
             species_ids=species_wanted,
             datemin=datemin,
             datemax=datemax
         )
+
 
 def execute_sql(sql, params):
     """
@@ -181,6 +191,7 @@ def blank_map():
         map_zoom=8
     )
     return fig
+    
 
 
 # ---------------------------------------------------------
@@ -256,6 +267,27 @@ app.layout = html.Div([
             ),
             html.Br(), html.Br(),
 
+            html.Div([
+                html.Label("Latitude Min"),
+                dcc.Input(id='lat-min', type='number', placeholder='Min Latitude', style={'width': '100%'}),
+
+                html.Label("Latitude Max"),
+                dcc.Input(id='lat-max', type='number', placeholder='Max Latitude', style={'width': '100%'}),
+
+                html.Label("Longitude Min"),
+                dcc.Input(id='lon-min', type='number', placeholder='Min Longitude', style={'width': '100%'}),
+
+                html.Label("Longitude Max"),
+                dcc.Input(id='lon-max', type='number', placeholder='Max Longitude', style={'width': '100%'}),
+            ], style={'display': 'grid', 'gridTemplateColumns': '1fr 1fr', 'gap': '10px', 'marginBottom': '20px'}),
+
+            # Red warning message
+            html.Div(
+                "🐾 Warning: Setting min/max latitude or longitude may cut off parts of an animal's path. "
+                "The points on the map may be misleading if your range intersects the animals' paths.🐾",
+                style={'color': 'red', 'fontSize': '12px', 'marginBottom': '10px'}
+            ),
+
             html.Button("Generate query", id='btn-generate-query', n_clicks=0),
             html.Span(id='sql-display', style={'fontSize': '12px', 'marginLeft': '10px', 'display': 'inline-block', 'verticalAlign': 'middle', 'maxWidth': '400px', 'whiteSpace': 'pre-wrap'}),
             html.Br(), html.Br(),
@@ -276,6 +308,7 @@ app.layout = html.Div([
                     ], style={'textAlign': 'right', 'marginBottom': '10px', 'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
 
+            # set up map
             html.Div([
             dcc.Graph(
                 id='graph-content',
@@ -401,9 +434,17 @@ def select_all_serials(n_clicks, options):
     State('date-max', 'date'),
     State('dropdown-species', 'options'),
     State('dropdown-serial', 'options'),
+    State('lat-min', 'value'),
+    State('lat-max', 'value'),
+    State('lon-min', 'value'),
+    State('lon-max', 'value'),
     prevent_initial_call=False
 )
-def on_generate_query(n_clicks, species_selected, serial_selected, date_min, date_max, species_options, serial_options):
+
+def on_generate_query(n_clicks, species_selected, serial_selected,
+                      date_min, date_max,
+                      species_options, serial_options,
+                      lat_min, lat_max, lon_min, lon_max):
     # Convert options lists into full-value lists for "all" checking
     all_species_values = [opt['value'] for opt in species_options] if species_options else []
     all_serial_values = [opt['value'] for opt in serial_options] if serial_options else []
@@ -425,7 +466,16 @@ def on_generate_query(n_clicks, species_selected, serial_selected, date_min, dat
     datemax = pd.to_datetime(date_max).to_pydatetime() if date_max else None
 
     # Call generate_query_and_params (or fallback wrapper)
-    sql, params = build_sql_and_params_from_selections(species_wanted, serial_id_wanted, datemin, datemax)
+    sql, params = build_sql_and_params_from_selections(
+        species_wanted,
+        serial_id_wanted,
+        datemin,
+        datemax,
+        lat_min=lat_min,
+        lat_max=lat_max,
+        lon_min=lon_min,
+        lon_max=lon_max
+    )
 
     # Store SQL + params
     return sql, params, (sql if sql else "")
