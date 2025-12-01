@@ -171,6 +171,18 @@ def execute_sql(sql, params):
     except Exception:
         return pd.DataFrame()
 
+def blank_map():
+    import plotly.express as px
+    df_empty = pd.DataFrame({'lat': [], 'lon': []})
+    fig = px.scatter_map(df_empty, lat='lat', lon='lon', title='No data yet')
+    fig.update_layout(
+        map_style='open-street-map',
+        map_center={"lat": -1.9, "lon": 34.8108},
+        map_zoom=8
+    )
+    return fig
+
+
 # ---------------------------------------------------------
 # APPLICATION SETUP
 # ---------------------------------------------------------
@@ -264,7 +276,18 @@ app.layout = html.Div([
                     ], style={'textAlign': 'right', 'marginBottom': '10px', 'display': 'flex', 'alignItems': 'center', 'gap': '10px'}),
 
 
-            dcc.Graph(id='graph-content', style={'height': '60vh'}),
+            html.Div([
+            dcc.Graph(
+                id='graph-content',
+                figure=blank_map(),
+                style={'height': '100%', 'width': '100%'}
+            )],
+            style={
+            'height': '80vh',     # pick any — 60vh / 80vh / 100vh
+            'width': '100%',
+            'overflow': 'hidden'
+            }),
+
 
             html.Br(),
             html.Div([
