@@ -4,14 +4,17 @@ body {
     color: #e6eef6;
     font-family: Arial, sans-serif;
 }
+
 h1 {
     color: #ffffff;
 }
+
 #graph-content {
     border: 1px solid #263240;
     border-radius: 6px;
     background: #07101a;
 }
+
 button {
     background-color: #2563eb;
     color: #fff;
@@ -20,7 +23,129 @@ button {
     border-radius: 6px;
     cursor: pointer;
 }
+
 button:disabled {
     background-color: #12324d;
     cursor: not-allowed;
+}
+
+/* ====== DASH DROPDOWN DARK MODE FIX ====== */
+
+.Select, .Select div, .Select input {
+    color: #e6eef6 !important;
+}
+
+.Select-control {
+    background-color: #1a2533 !important;
+    border-color: #2c3a4a !important;
+    color: #e6eef6 !important;
+}
+
+.Select-placeholder {
+    color: #9ba7b4 !important;
+}
+
+.Select-value-label {
+    color: #e6eef6 !important;
+}
+
+.Select-menu-outer {
+    background-color: #1a2533 !important;
+    border-color: #2c3a4a !important;
+}
+
+.Select-option {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+}
+
+.Select-option:hover {
+    background-color: #2b3b50 !important;
+    color: #ffffff !important;
+}
+
+.Select-option.is-focused {
+    background-color: #2b3b50 !important;
+}
+
+.Select-option.is-selected {
+    background-color: #3a4c63 !important;
+    color: #ffffff !important;
+}
+
+.Select-input > input {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+}
+
+
+
+/* ====== DASH DATE PICKER (dcc.DatePickerSingle) DARK MODE ====== */
+
+/* Container */
+.DateInput, .DateInput_input {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+    border: 1px solid #2c3a4a !important;
+}
+
+.DateInput_input::placeholder {
+    color: #9ba7b4 !important;
+}
+
+/* Focus ring */
+.DateInput_input__focused {
+    border-color: #3b82f6 !important; /* subtle blue to match buttons */
+    background-color: #1d2a3a !important;
+    color: #ffffff !important;
+}
+
+/* Calendar popup */
+.DayPicker {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+    border: 1px solid #2c3a4a !important;
+}
+
+.CalendarDay__default {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+    border: 1px solid #2c3a4a !important;
+}
+
+.CalendarDay__default:hover {
+    background-color: #2b3b50 !important;
+    color: #ffffff !important;
+}
+
+.CalendarDay__selected, .CalendarDay__selected:hover {
+    background-color: #3a4c63 !important;
+    color: #ffffff !important;
+}
+
+
+/* ====== DASH INPUT BOXES (dcc.Input) DARK MODE ====== */
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+textarea {
+    background-color: #1a2533 !important;
+    color: #e6eef6 !important;
+    border: 1px solid #2c3a4a !important;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+    color: #9ba7b4 !important;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    background-color: #1d2a3a !important;
+    color: #ffffff !important;
 }

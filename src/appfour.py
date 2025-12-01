@@ -164,7 +164,9 @@ def blank_map():
     fig.update_layout(
         map_style='open-street-map',
         map_center={"lat": -1.9, "lon": 34.8108},
-        map_zoom=8
+        map_zoom=8,
+        paper_bgcolor="#eef4ab"
+
     )
     return fig
 
@@ -340,8 +342,7 @@ app.layout = html.Div([
         ], style={'width': '68%', 'display': 'inline-block', 'padding': '10px', 'boxSizing': 'border-box', 'verticalAlign': 'top'})
     ], style={'width': '100%', 'display': 'flex', 'justifyContent': 'space-between'}),
     html.Div([
-        html.P("Note: 'Update current' button removed — the app runs the same update at startup and also refreshes when webscrape finishes. "
-               "Ensure generate_sql_query.generate_query_and_params and interact_db.read_db are available."),
+        html.P("Data sourced from serengeti-tracker.org. Developed by Chris Tillotson and Will Stanziano, Fall 2025."),
     ], style={'marginTop': '10px', 'fontStyle': 'italic'})
 ],
     # Basic inline fallback styling (themes live in CSS files)
@@ -597,7 +598,8 @@ def build_map_figure_from_df(df):
     """
     if df is None or df.empty:
         empty_fig = px.scatter_map(pd.DataFrame({'lat': [], 'lon': []}), lat='lat', lon='lon', title='No data to plot')
-        empty_fig.update_layout(map_style='open-street-map')
+        empty_fig.update_layout(map_style='open-street-map', paper_bgcolor="#eef4ab"
+)
         return empty_fig
 
     df2 = df.copy()
@@ -694,7 +696,8 @@ def build_map_figure_from_df(df):
         map_center=map_center,
         map_zoom=7.5,
         margin={'l':0, 'r':0, 'b':0, 't':30},
-        title='Observations map (points linked by serialId in time order)'
+        title='Observations map (points linked by serialId in time order)',
+        paper_bgcolor="#eef4ab"
     )
 
     return fig

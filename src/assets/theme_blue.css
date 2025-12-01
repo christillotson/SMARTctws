@@ -1,17 +1,20 @@
-/* Blue accent theme */
+/* ====== BLUE ACCENT THEME ====== */
 body {
     background-color: #eaf6ff;
     color: #07263b;
     font-family: Arial, sans-serif;
 }
+
 h1 {
     color: #023047;
 }
+
 #graph-content {
     border: 1px solid #b6e0ff;
     border-radius: 6px;
     background: #ffffff;
 }
+
 button {
     background-color: #118ab2;
     color: #ffffff;
@@ -20,7 +23,123 @@ button {
     border-radius: 6px;
     cursor: pointer;
 }
+
 button:disabled {
     background-color: #7fb7c9;
     cursor: not-allowed;
+}
+
+/* ====== DASH DROPDOWN BLUE THEME ====== */
+.Select, .Select div, .Select input {
+    color: #07263b !important;
+}
+
+.Select-control {
+    background-color: #d4f0ff !important;
+    border-color: #b6e0ff !important;
+    color: #07263b !important;
+}
+
+.Select-placeholder {
+    color: #7fb7c9 !important;
+}
+
+.Select-value-label {
+    color: #07263b !important;
+}
+
+.Select-menu-outer {
+    background-color: #d4f0ff !important;
+    border-color: #b6e0ff !important;
+}
+
+.Select-option {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+}
+
+.Select-option:hover {
+    background-color: #9ed9f2 !important;
+    color: #023047 !important;
+}
+
+.Select-option.is-focused {
+    background-color: #9ed9f2 !important;
+}
+
+.Select-option.is-selected {
+    background-color: #66c0e0 !important;
+    color: #ffffff !important;
+}
+
+.Select-input > input {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+}
+
+/* ====== DASH DATE PICKER (dcc.DatePickerSingle) BLUE THEME ====== */
+/* Container */
+.DateInput, .DateInput_input {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+    border: 1px solid #b6e0ff !important;
+}
+
+.DateInput_input::placeholder {
+    color: #7fb7c9 !important;
+}
+
+/* Focus ring */
+.DateInput_input__focused {
+    border-color: #118ab2 !important;
+    background-color: #a1dbf0 !important;
+    color: #023047 !important;
+}
+
+/* Calendar popup */
+.DayPicker {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+    border: 1px solid #b6e0ff !important;
+}
+
+.CalendarDay__default {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+    border: 1px solid #b6e0ff !important;
+}
+
+.CalendarDay__default:hover {
+    background-color: #9ed9f2 !important;
+    color: #023047 !important;
+}
+
+.CalendarDay__selected, .CalendarDay__selected:hover {
+    background-color: #66c0e0 !important;
+    color: #ffffff !important;
+}
+
+/* ====== DASH INPUT BOXES (dcc.Input) BLUE THEME ====== */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+textarea {
+    background-color: #d4f0ff !important;
+    color: #07263b !important;
+    border: 1px solid #b6e0ff !important;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+    color: #7fb7c9 !important;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none !important;
+    border-color: #118ab2 !important;
+    background-color: #a1dbf0 !important;
+    color: #023047 !important;
 }
