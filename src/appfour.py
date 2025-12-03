@@ -5,18 +5,22 @@ import pandas as pd
 import datetime
 from datetime import datetime as dt, timezone, timedelta
 
+import webbrowser
+from threading import Timer
+# these above two just used to make app start automatically
+
 # Try to import your real functions. If they are not available (e.g. during local dev),
 # fall back to demo placeholders so the app still runs.
 try:
     from app_functions.generate_sql_query import generate_query_and_params
-    print("generate_query_and_params imported")
+    print("generate_query_and_params successfully imported")
 except Exception as e:
     generate_query_and_params = None
     _IMPORT_GENERATE_QUERY_ERROR = str(e)
 
 try:
     from db_code.interact_db import read_db
-    print("interact_db imported")
+    print("interact_db successfully imported")
 except Exception as e:
     read_db = None
     _IMPORT_READ_DB_ERROR = str(e)
@@ -24,12 +28,14 @@ except Exception as e:
 # NEW IMPORTS FOR WEBSCRAPING ##########
 try:
     from app_functions.webscraping import do_webscrape
+    print("do_webscrape successfully imported")
 except Exception as e:
     do_webscrape = None
     _IMPORT_WEBSCRAPE_ERROR = str(e)
 
 try:
     from db_code.interact_db import add_new
+    print("add_new successfully imported")
 except Exception as e:
     add_new = None
     _IMPORT_ADD_NEW_ERROR = str(e)
@@ -221,6 +227,8 @@ app.layout = html.Div([
         # LEFT: controls column
         html.Div([
             html.H3("Query Controls"),
+            html.Div("Selecting none will return all possible values"),
+            html.Br(),
             html.Label("Species (multi-select)"),
             dcc.Dropdown(
                 id='dropdown-species',
@@ -279,7 +287,7 @@ app.layout = html.Div([
            html.Div(
                "🐾 Warning: Setting min/max latitude or longitude may cut off parts of an animal's path. "
                "The points on the map may be misleading if your range intersects the animals' paths.🐾",
-               style={'color': 'red', 'fontSize': '14px', 'marginBottom': '10px', 'font-weight':'bold'}
+               style={'color': 'red', 'marginBottom': '10px', 'font-weight':'bold'}
            ),
 
             html.Button("Generate query", id='btn-generate-query', n_clicks=0),
@@ -518,6 +526,7 @@ def show_last_scraped(last_scraped):
             html.Div(f"| {eat} Eastern Africa Time"),
             html.Div(f"| {est} Eastern Standard Time"),
             html.Div(f"| {zulu} Zulu (GMT) Time"),
+            html.Div("Should be done at least every 3 months for accurate data")
         ])
     except Exception:
         # fallback
@@ -738,4 +747,8 @@ def switch_theme(theme_value):
 if __name__ == '__main__':
     port = 8050
     address = f"http://localhost:{port}"
-    app.run(debug=True, port=port)
+
+    # Open the browser after Dash starts
+    Timer(3, lambda: webbrowser.open(address)).start()
+
+    app.run(debug=False, port=port)

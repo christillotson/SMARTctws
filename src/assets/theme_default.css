@@ -3,6 +3,7 @@ body {
     background-color: #f5c058ff;
     color: #222;
     font-family: Arial, sans-serif;
+    font-size:24px;
 }
 
 h1 {
@@ -22,6 +23,7 @@ button {
     padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
+    font-size:24px;
 }
 
 button:disabled {
@@ -38,6 +40,7 @@ button:disabled {
     background-color: #fdf2d1 !important;
     border-color: #e0d7c5 !important;
     color: #222 !important;
+    font-size:24px;
 }
 
 .Select-placeholder {
