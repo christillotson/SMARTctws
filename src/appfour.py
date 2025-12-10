@@ -457,7 +457,7 @@ def on_generate_query(n_clicks, show_sql_vals, species_selected, serial_selected
 
 
     show_sql = 'show' in (show_sql_vals or [])
-    sql_text = sql if (show_sql and sql) else ""
+    sql_text = str(sql) + "\n Params: \n" + str(params) if (show_sql and sql) else ""
 
     return sql, params, sql_text
 
