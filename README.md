@@ -1,5 +1,5 @@
 # Serengeti Mammal Analysis & Research Tool (SMART)
-
+![A screenshot of all animal paths in the Serengeti, as it would look like in the launched app, as of 12-10-2025](imgs/serengeti_screenshot.png "Serengeti Screenshot")
 ## Overview
 
 ### Authors
