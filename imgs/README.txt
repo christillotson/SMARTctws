@@ -1,0 +1,3 @@
+In this folder is 
+- serengeti_screenshot.png, the image used in the ReadMe to demonstrate what the visualization in the app looks like / as our banner image
+- SharkTankNovember3.pptx, a presentation we gave on Nov. 3 to detail our plans for the project. This was in the form of a mock Shark Tank pitch to our classmates and Professor Smith, with them acting as the Sharks. They decided to "fund" our project!
