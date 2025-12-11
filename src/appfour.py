@@ -1,16 +1,28 @@
 from dash import Dash, html, dcc, callback, Output, Input, State, ctx, no_update
+# to make the dash app work
+
 import plotly.express as px
 import plotly.graph_objects as go
+# to make the plotly graph quick - vis on the right work
+
 import pandas as pd
+# basic
+
 import datetime
 from datetime import datetime as dt, timezone, timedelta
+# make datetime work in terms of when scraped as well as querying
 
 import webbrowser
+# app will open in the default web browser
+
 from threading import Timer
 # these above two just used to make app start automatically
 
-# Try to import your real functions. If they are not available (e.g. during local dev),
+# Try to import the real functions to make the app work. 
+# If they are not available (e.g. during local dev),
 # fall back to demo placeholders so the app still runs.
+# Keeping these in for any future development in case something breaks and I need to fall back on them
+
 try:
     from app_functions.generate_sql_query import generate_query_and_params
     print("generate_query_and_params successfully imported")
@@ -25,7 +37,6 @@ except Exception as e:
     read_db = None
     _IMPORT_READ_DB_ERROR = str(e)
 
-# NEW IMPORTS FOR WEBSCRAPING ##########
 try:
     from app_functions.webscraping import do_webscrape
     print("do_webscrape successfully imported")
@@ -57,17 +68,18 @@ def _demo_serials_df():
     return pd.DataFrame({'serialId': [f'S{n:02d}' for n in range(1, 21)]})
 
 # -------------------------
-# Integrations: run_all_update_funcs -> queries the DB for "all" lists using "##!##" placeholders
+# Integrations: run_all_update_funcs -> queries the DB for everything needed to populate the querying fields, as well as last scraped
 # -------------------------
 def run_all_update_funcs():
     """
     This function runs at startup and returns:
-     - species_df: DataFrame with at least columns ['species_name', 'species_id']
-     - observations/serials_df: DataFrame used to populate serial dropdown (expected to contain serial IDs)
+     - species_df: DataFrame with at least columns ['species_name', 'species_id'] to populate species names
+     - observations_df: DataFrame used to populate serial dropdown (expected to contain serial IDs)
     """
-    sql_serials = "SELECT serialId FROM tAnimal"   # expects single column 'serialId'
+    sql_serials = "SELECT serialId FROM tAnimal"   # expect column 'serialId' is in tAnimal (see ERD)
     sql_species = "SELECT * FROM tSpecies"   # expects columns 'species_id' and 'species_name'
 
+    # Fallbacks, try read_db but if for whatever reason it doesn't work do fallback
     if read_db is not None:
         try:
             serials_df = read_db(sql_serials)
@@ -79,48 +91,30 @@ def run_all_update_funcs():
         species_df = _demo_species_df()
         serials_df = _demo_serials_df()
 
-    # Normalize names
-    if 'species_id' not in species_df.columns and 'species' in species_df.columns:
-        species_df = species_df.rename(columns={'species': 'species_id'})
-    if 'species_name' not in species_df.columns and 'name' in species_df.columns:
-        species_df = species_df.rename(columns={'name': 'species_name'})
-
-    # Convert serials_df to serial_id form for dropdown population
-    if 'serialId' in serials_df.columns and 'serial_id' not in serials_df.columns:
-        serials_for_dropdown = serials_df.rename(columns={'serialId': 'serial_id'})
-    elif 'serial_id' in serials_df.columns:
-        serials_for_dropdown = serials_df.copy()
-    else:
-        if not serials_df.empty:
-            first_col = serials_df.columns[0]
-            serials_for_dropdown = serials_df.rename(columns={first_col: 'serial_id'})
-        else:
-            serials_for_dropdown = pd.DataFrame(columns=['serial_id'])
-
-    observations_df = serials_for_dropdown.copy()
-
-    return {'species_df': species_df, 'observations_df': observations_df}
+    return {'species_df': species_df, 'observations_df': serials_df}
 
 # -------------------------
 # SQL helpers (unchanged)
 # -------------------------
 def build_sql_and_params_from_selections(species_wanted, 
-                                         serial_id_wanted, 
+                                         serialId_wanted, 
                                          datemin, 
                                          datemax,
                                          lat_min,
                                          lat_max,
                                          lon_min,
                                          lon_max):
+    
+    # THIS WHOLE IF IS A FALLBACK
     if generate_query_and_params is None:
         where_clauses = []
         params = {}
         if species_wanted is not None:
             where_clauses.append("species_id IN %(species)s")
             params['species'] = tuple(species_wanted)
-        if serial_id_wanted is not None:
-            where_clauses.append("serial_id IN %(serial)s")
-            params['serial'] = tuple(serial_id_wanted)
+        if serialId_wanted is not None:
+            where_clauses.append("serialId IN %(serial)s")
+            params['serial'] = tuple(serialId_wanted)
         if datemin is not None:
             where_clauses.append("date >= %(datemin)s")
             params['datemin'] = datemin.isoformat()
@@ -142,9 +136,10 @@ def build_sql_and_params_from_selections(species_wanted,
         where = " AND ".join(where_clauses) if where_clauses else "1=1"
         sql = f"SELECT * FROM observations WHERE {where};"
         return sql, params
+    # ELSE if it is working as intended
     else:
         return generate_query_and_params(
-            serialIds=serial_id_wanted,
+            serialIds=serialId_wanted,
             species_ids=species_wanted,
             datemin=datemin,
             datemax=datemax,
@@ -154,6 +149,7 @@ def build_sql_and_params_from_selections(species_wanted,
             lon_max=lon_max
         )
 
+# Includes fallbacks but basically try and do read_db or account for several ways it could go wrong
 def execute_sql(sql, params):
     if read_db is None:
         return pd.DataFrame()
@@ -164,9 +160,10 @@ def execute_sql(sql, params):
     except Exception:
         return pd.DataFrame()
 
+# Blank initial figure to show 1. initially or 2. if the query results in no data
 def blank_map():
     df_empty = pd.DataFrame({'lat': [], 'lon': []})
-    fig = px.scatter_map(df_empty, lat='lat', lon='lon', title='No data yet')
+    fig = px.scatter_map(df_empty, lat='lat', lon='lon', title='No data')
     fig.update_layout(
         map_style='open-street-map',
         map_center={"lat": -1.9, "lon": 34.8108},
@@ -185,16 +182,20 @@ server = app.server
 # ------------------------------
 # RUN AT APP STARTUP (module import time)
 # ------------------------------
+
 startup_results = run_all_update_funcs()
+# returns two dataframes
+
 _startup_species_df = startup_results.get('species_df', pd.DataFrame(columns=['species_name', 'species_id']))
 _startup_observations_df = startup_results.get('observations_df', pd.DataFrame())
+# get those two dataframes
 
 # Prepare initial store data
 initial_species_store = _startup_species_df.to_dict(orient='records')
 initial_observations_store = _startup_observations_df.to_dict(orient='records')
 
 def get_last_scraped():
-    # Query your DB once during app startup
+    # Query the DB once during app startup
     try:
         df = read_db("SELECT MAX(last_scraped) AS last FROM tAnimal")
         if df.iloc[0]["last"] is not None:
@@ -221,7 +222,7 @@ app.layout = html.Div([
     dcc.Store(id='store-results-df', data=None),
     dcc.Store(id='store-last-scraped', data=initial_last_scraped),
 
-    html.H1('Serengeti Tracker Assistant', style={'textAlign': 'center'}),
+    html.H1('Serengeti Mammal Analysis & Research Tool', style={'textAlign': 'center'}),
 
     html.Div([
         # LEFT: controls column
@@ -241,7 +242,7 @@ app.layout = html.Div([
             html.Label("Serial ID (multi-select)"),
             dcc.Dropdown(
                 id='dropdown-serial',
-                options=[{'label': s, 'value': s} for s in sorted(_startup_observations_df['serial_id'].unique())] if not _startup_observations_df.empty else [],
+                options=[{'label': s, 'value': s} for s in sorted(_startup_observations_df['serialId'].unique())] if not _startup_observations_df.empty else [],
                 multi=True,
                 placeholder='Select serial IDs...'
             ),
@@ -352,7 +353,7 @@ app.layout = html.Div([
         ], style={'width': '68%', 'display': 'inline-block', 'padding': '10px', 'boxSizing': 'border-box', 'verticalAlign': 'top'})
     ], style={'width': '100%', 'display': 'flex', 'justifyContent': 'space-between'}),
     html.Div([
-        html.P("Data sourced from serengeti-tracker.org. Developed by Chris Tillotson and Will Stanziano, Fall 2025."),
+        html.P("Data sourced from serengeti-tracker.org. Developed by Christopher Tillotson and William Stanziano, Fall 2025."),
     ], style={'marginTop': '10px', 'fontStyle': 'italic'})
 ],
     # Basic inline fallback styling (themes live in CSS files)
@@ -362,6 +363,7 @@ app.layout = html.Div([
     'margin': '0',
     }
 )
+# End layout
 
 # ---------------------------------------------------------
 # CALLBACKS
@@ -380,8 +382,8 @@ def refresh_dropdown_options(species_store, observations_store):
 
     species_options = df_to_options(species_df, 'species_name', 'species_id') if not species_df.empty else []
     if not obs_df.empty:
-        if 'serial_id' in obs_df.columns:
-            serial_list = sorted(obs_df['serial_id'].astype(str).unique())
+        if 'serialId' in obs_df.columns:
+            serial_list = sorted(obs_df['serialId'].astype(str).unique())
         elif 'serialId' in obs_df.columns:
             serial_list = sorted(obs_df['serialId'].astype(str).unique())
         else:
@@ -437,16 +439,16 @@ def on_generate_query(n_clicks, show_sql_vals, species_selected, serial_selected
         species_wanted = list(species_selected)
 
     if not serial_selected or set(serial_selected) == set(all_serial_values):
-        serial_id_wanted = None
+        serialId_wanted = None
     else:
-        serial_id_wanted = list(serial_selected)
+        serialId_wanted = list(serial_selected)
 
     datemin = pd.to_datetime(date_min).to_pydatetime() if date_min else None
     datemax = pd.to_datetime(date_max).to_pydatetime() if date_max else None
 
     sql, params = build_sql_and_params_from_selections(
        species_wanted,
-       serial_id_wanted,
+       serialId_wanted,
        datemin,
        datemax,
        lat_min=lat_min,
@@ -491,7 +493,7 @@ def on_run_query(n_clicks, sql, params):
     return results_data, fig
 
 
-# Display "Last scraped:" in three human-readable time zones
+# Display "Last scraped:" in three time zones
 @callback(
     Output('display-last-scraped', 'children'),
     Input('store-last-scraped', 'data')
@@ -510,11 +512,11 @@ def show_last_scraped(last_scraped):
         return f"Last scraped: {last_scraped}"
 
     # Define timezones
-    tz_utc = timezone.utc
+    tz_utc = timezone.utc # time the data is stored in
     tz_eat = timezone(timedelta(hours=3))   # East Africa Time UTC+3
     tz_est = timezone(timedelta(hours=-5))  # Eastern Standard Time UTC-5
 
-    fmt = "%Y-%m-%d %H:%M:%S %Z%z"
+    # fmt = "%Y-%m-%d %H:%M:%S %Z%z"
 
     try:
         # Convert to the three zones
@@ -545,8 +547,6 @@ def show_last_scraped(last_scraped):
 )
 def on_webscrape(n_clicks):
     # Immediately set button disabled and text — Dash will send these outputs once the callback completes.
-    # We'll emulate "In Progress..." via final outputs; while running this callback the UI will show loading state.
-    webscrape_text_in_progress = "In Progress..."
     # If webscrape function missing, just return no_update for stores and re-enable button
     if do_webscrape is None or add_new is None:
         print("Webscraping or add_new function unavailable.")
@@ -576,7 +576,7 @@ def on_webscrape(n_clicks):
     except Exception as e:
         print("Webscrape error:", e)
 
-    # After webscraping finishes, re-run the update functions (this replaces the old "Update current" behavior)
+    # After webscraping finishes, re-run the update functions 
     results = run_all_update_funcs()
     species_df = results.get('species_df', pd.DataFrame(columns=['species_name', 'species_id']))
     observations_df = results.get('observations_df', pd.DataFrame())
@@ -608,68 +608,28 @@ def build_map_figure_from_df(df):
      - Markers and lines will share the same color per trace (automatic Plotly coloring)
     """
     if df is None or df.empty:
-        empty_fig = px.scatter_map(pd.DataFrame({'lat': [], 'lon': []}), lat='lat', lon='lon', title='No data to plot')
-        empty_fig.update_layout(map_style='open-street-map', paper_bgcolor="#eef4ab"
-)
-        return empty_fig
+        return blank_map()
 
     df2 = df.copy()
 
-    # Normalize serial id
-    if 'serialId' not in df2.columns and 'serial_id' in df2.columns:
-        df2 = df2.rename(columns={'serial_id': 'serialId'})
-    elif 'serialId' not in df2.columns and 'serial' in df2.columns:
-        df2 = df2.rename(columns={'serial': 'serialId'})
-
-    # latitude/longitude normalization
-    lat_col = None
-    lon_col = None
-    for cand in ['latitude', 'lat', 'Latitude', 'LAT']:
-        if cand in df2.columns:
-            lat_col = cand
-            break
-    for cand in ['longitude', 'lon', 'Longitude', 'LON']:
-        if cand in df2.columns:
-            lon_col = cand
-            break
-
-    if lat_col is None or lon_col is None:
-        fallback = px.scatter(pd.DataFrame({'x': [], 'y': []}), x='x', y='y', title='No latitude/longitude columns found in result')
-        return fallback
-
-    df2 = df2.rename(columns={lat_col: 'latitude', lon_col: 'longitude'})
-
-    # species_name normalization
-    if 'species_name' not in df2.columns:
-        for cand in ['species', 'speciesName', 'species_name_str']:
-            if cand in df2.columns:
-                df2 = df2.rename(columns={cand: 'species_name'})
-                break
-
-    # date normalization
-    if 'date' not in df2.columns:
-        for cand in ['datetime', 'obs_date', 'time']:
-            if cand in df2.columns:
-                df2 = df2.rename(columns={cand: 'date'})
-                break
-
-    if 'date' in df2.columns:
-        df2['date'] = pd.to_datetime(df2['date'])
-    else:
-        df2['date'] = pd.Series([pd.NaT] * len(df2))
-
-    if 'serialId' not in df2.columns:
-        df2['serialId'] = df2[df2.columns[0]].astype(str)
+    # Ensures works with isoformat
+    df2['date'] = pd.to_datetime(df2['date'])
 
     # center map
+    # NOTE to future editors
+    # Override here is a design choice. Remove to allow default logic,
+    # Which is to center over queried area.
     try:
         center_lat = df2['latitude'].astype(float).mean()
         center_lon = df2['longitude'].astype(float).mean()
         map_center = {"lat": center_lat, "lon": center_lon}
+
+        ## OVERRIDE
         # override to manual center if desired:
         map_center = {"lat": -1.9, "lon": 34.81076841740793}
-    except Exception:
+        ## /OVERRIDE
 
+    except Exception:
         map_center = {"lat": -1.9, "lon": 34.81076841740793}
 
     fig = go.Figure()
@@ -728,7 +688,8 @@ def export_csv(n_clicks, results_store):
     return dcc.send_data_frame(df.to_csv, filename=f'results_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.csv', index=False)
 
 
-# Theme selector: update the CSS href to switch themes (assets must contain the files)
+# Theme selector: update the CSS href to switch themes 
+# assets must contain the files
 @callback(
     Output('theme-link', 'href'),
     Input('theme-selector', 'value')
